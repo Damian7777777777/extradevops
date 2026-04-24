@@ -128,9 +128,14 @@ jobs:
               exit 1
             fi
 
-            docker stop app-active 2>/dev/null || true
-            docker rm   app-active 2>/dev/null || true
-            docker rename app-next app-active
+            docker stop app-next
+            docker rm   app-next
+
+            sed -i "s|image: ghcr.io/damian7777777777/extradevops/app-.*:.*|image: $REPO/app-$NEXT:$TAG|" docker-compose.yml
+
+            docker compose up -d app-active
+
+            sleep 3
 
             docker exec nginx-proxy nginx -s reload
 
