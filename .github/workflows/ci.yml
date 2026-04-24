@@ -10,9 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'npm'
+          cache-dependency-path: proyecto-devops/package-lock.json
 
       - name: Instalar herramientas de compilacion
         run: sudo apt-get update -y && sudo apt-get install -y python3 make g++ build-essential
@@ -23,8 +26,8 @@ jobs:
       - name: Instalar dependencias y correr pruebas
         working-directory: ./proyecto-devops
         run: |
-          npm install --build-from-source
-          npm test
+          npm ci
+          node ./node_modules/jest/bin/jest.js --forceExit
 
   construir-y-publicar:
     runs-on: ubuntu-latest
@@ -78,6 +81,8 @@ jobs:
           username: ${{ secrets.GCP_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
           script: |
+            set -e
+
             TAG="${{ needs.construir-y-publicar.outputs.tag }}"
             REPO=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')
 
@@ -111,13 +116,16 @@ jobs:
             STATUS=0
             for i in $(seq 1 15); do
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3005/health)
-              [ "$STATUS" = "200" ] && echo "Saludable en intento $i" && break
+              if [ "$STATUS" = "200" ]; then
+                echo "Saludable en intento $i"
+                break
+              fi
               echo "Esperando ($i/15)..."
               sleep 3
             done
 
             if [ "$STATUS" != "200" ]; then
-              echo "Candidato no responde - rollback, $LAST sigue activo"
+              echo "Candidato no responde - rollback"
               docker stop app-next || true
               docker rm   app-next || true
               exit 1
@@ -158,7 +166,7 @@ jobs:
             stages: [
               { duration: '10s', target: 10 },
               { duration: '20s', target: 30 },
-              { duration: '10s', target: 0  },
+              { duration: '10s', target: 0 },
             ],
             thresholds: {
               http_req_duration: ['p(95)<500'],
