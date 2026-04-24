@@ -77,6 +77,9 @@ jobs:
           host: ${{ secrets.GCP_HOST }}
           username: ${{ secrets.GCP_USER }}
           key: ${{ secrets.GCP_SSH_KEY }}
+          proxy_host: ${{ secrets.BASTION_HOST }}
+          proxy_username: ${{ secrets.BASTION_USER }}
+          proxy_key: ${{ secrets.GCP_SSH_KEY }}
           script: |
             TAG="${{ needs.construir-y-publicar.outputs.tag }}"
             REPO=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')
@@ -148,7 +151,7 @@ jobs:
 
       - name: Correr pruebas de carga contra produccion
         env:
-          GCP_HOST: ${{ secrets.GCP_HOST }}
+          GCP_HOST: ${{ secrets.NGINX_IP }}
         run: |
           cat > /tmp/k6-script.js << 'K6EOF'
           import http from 'k6/http';
