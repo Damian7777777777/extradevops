@@ -14,16 +14,13 @@ jobs:
         with:
           node-version: 20
 
-      - name: Instalar herramientas de compilacion
-        run: sudo apt-get update -y && sudo apt-get install -y python3 make g++ build-essential
-
       - name: Limpiar base de datos
         run: rm -f proyecto-devops/database.db
 
       - name: Instalar dependencias y correr pruebas
         working-directory: ./proyecto-devops
         run: |
-          npm install --build-from-source
+          npm ci
           npm test
 
   construir-y-publicar:
