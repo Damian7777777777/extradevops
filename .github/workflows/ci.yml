@@ -24,7 +24,7 @@ jobs:
         working-directory: ./proyecto-devops
         run: |
           npm install --build-from-source
-          ./node_modules/.bin/jest --forceExit
+          npm test
 
   construir-y-publicar:
     runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
             TAG="${{ needs.construir-y-publicar.outputs.tag }}"
             REPO=$(echo ghcr.io/${{ github.repository }} | tr '[:upper:]' '[:lower:]')
 
-            cd ~/remedevops
+            cd ~/extradevops
 
             if [ -f .current_color ]; then
               LAST=$(cat .current_color)
@@ -97,20 +97,17 @@ jobs:
 
             docker pull $REPO/app-$NEXT:$TAG
 
-            # Limpiar candidato anterior
             docker stop app-next 2>/dev/null || true
             docker rm   app-next 2>/dev/null || true
 
-            # Levantar candidato en puerto 3005 (no toca produccion)
             docker run -d \
               --name app-next \
-              --network remedevops_remedevops \
+              --network extradevops_default \
               -e VERSION=$NEXT \
               -e PORT=3000 \
               -p 3005:3000 \
               $REPO/app-$NEXT:$TAG
 
-            # Health check con retry
             STATUS=0
             for i in $(seq 1 15); do
               STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3005/health)
@@ -126,12 +123,10 @@ jobs:
               exit 1
             fi
 
-            # Promover: renombrar app-next a app-active
             docker stop app-active 2>/dev/null || true
             docker rm   app-active 2>/dev/null || true
             docker rename app-next app-active
 
-            # Recargar nginx para que resuelva app-active
             docker exec nginx-proxy nginx -s reload
 
             docker image prune -af --filter "until=24h" || true
