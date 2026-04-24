@@ -1,43 +1,39 @@
-version: '3.8'
-
+gcloud compute ssh bastion-host --zone=us-central1-a --command="ssh -o StrictHostKeyChecking=no g2022371178@10.10.2.2 'cat > ~/extradevops/docker-compose.yml << '"'"'EOF'"'"'
+version: \"3.8\"
 services:
-  nginx:
+  app-active:
+    image: ghcr.io/damian7777777777/extradevops/app-blue:latest
+    container_name: app-active
+    environment:
+      - VERSION=blue
+      - PORT=3000
+    ports:
+      - \"3000:3000\"
+  nginx-proxy:
     image: nginx:alpine
     container_name: nginx-proxy
     ports:
-      - "80:80"
+      - \"80:80\"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/html:/usr/share/nginx/html
-    networks:
-      - remedevops
-
+    depends_on:
+      - app-active
   prometheus:
     image: prom/prometheus
     container_name: prometheus
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
-      - "9090:9090"
-    networks:
-      - remedevops
-
+      - \"9090:9090\"
   grafana:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - "3001:3000"
+      - \"3001:3000\"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
-    networks:
-      - remedevops
-
-networks:
-  remedevops:
-    driver: bridge
-
 volumes:
   grafana-data:
+EOF'"
