@@ -132,6 +132,7 @@ jobs:
             docker rm   app-next
 
             sed -i "s|image: ghcr.io/damian7777777777/extradevops/app-.*:.*|image: $REPO/app-$NEXT:$TAG|" docker-compose.yml
+            sed -i "s|- VERSION=.*|- VERSION=$NEXT|" docker-compose.yml
 
             docker rm -f app-active 2>/dev/null || true
             docker compose up -d --force-recreate app-active
