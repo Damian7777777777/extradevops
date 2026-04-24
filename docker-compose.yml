@@ -1,33 +1,6 @@
 version: '3.8'
 
 services:
-  app-blue:
-    image: ghcr.io/damian7777777777/remedevops/app-blue:${TAG:-latest}
-    container_name: app-blue
-    environment:
-      - VERSION=blue
-      - PORT=3000
-    ports:
-      - "3001:3000"
-
-  app-green:
-    image: ghcr.io/damian7777777777/remedevops/app-green:${TAG:-latest}
-    container_name: app-green
-    environment:
-      - VERSION=green
-      - PORT=3000
-    ports:
-      - "3002:3000"
-
-  app-active:
-    image: ghcr.io/damian7777777777/remedevops/app-blue:${TAG:-latest}
-    container_name: app-active
-    environment:
-      - VERSION=blue
-      - PORT=3000
-    ports:
-      - "3000:3000"
-
   nginx:
     image: nginx:alpine
     container_name: nginx-proxy
@@ -36,8 +9,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/html:/usr/share/nginx/html
-    depends_on:
-      - app-active
+    networks:
+      - remedevops
 
   prometheus:
     image: prom/prometheus
@@ -46,16 +19,25 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      - remedevops
 
   grafana:
     image: grafana/grafana
     container_name: grafana
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - remedevops
+
+networks:
+  remedevops:
+    driver: bridge
 
 volumes:
   grafana-data:
