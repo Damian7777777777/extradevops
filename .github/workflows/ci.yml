@@ -134,7 +134,7 @@ jobs:
 
             docker exec nginx-proxy nginx -s reload
 
-            docker image prune -af --filter "until=24h" || true
+            docker image prune -f || true
 
             echo "$NEXT" > .current_color
             echo "Deploy exitoso - activo: $NEXT"
