@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 
 app.use(express.json());
 
-app.get('/health', (req, res) => res.json({ status: 'ok', version: process.env.VERSION || 'blue' }));
+app.get('/health', (req, res) => res.json({ status: 'oksote', version: process.env.VERSION || 'blue' }));
 
 app.get('/metrics', async (req, res) => {
   res.set('Content-Type', register.contentType);
